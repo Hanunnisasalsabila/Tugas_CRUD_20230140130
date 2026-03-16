@@ -5,17 +5,26 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.util.NoSuchElementException; // Tambahan import
+
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    // Menangkap semua error yang dilempar menggunakan RuntimeException
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<ApiResponse<Object>> handleRuntimeException(RuntimeException ex) {
-
-        // Membungkus pesan error dari service ke dalam format ResponseUtil buatanmu
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiResponse<Object>> handleBadRequest(IllegalArgumentException ex) {
         ApiResponse<Object> response = ResponseUtil.error(ex.getMessage());
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
 
-        // Mengembalikan response dengan HTTP Status 500 (Internal Server Error)
+    @ExceptionHandler(NoSuchElementException.class)
+    public ResponseEntity<ApiResponse<Object>> handleNotFound(NoSuchElementException ex) {
+        ApiResponse<Object> response = ResponseUtil.error(ex.getMessage());
+        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiResponse<Object>> handleGeneralError(Exception ex) {
+        ApiResponse<Object> response = ResponseUtil.error("Terjadi kesalahan internal pada server");
         return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

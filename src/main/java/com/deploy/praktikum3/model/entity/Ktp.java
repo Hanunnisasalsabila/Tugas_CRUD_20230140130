@@ -24,6 +24,7 @@ public class Ktp {
     private String alamat;
 
     @Column(name = "tanggal_lahir")
+    @Temporal(TemporalType.DATE)
     private Date tanggalLahir;
 
     @Column(name = "jenis_kelamin")

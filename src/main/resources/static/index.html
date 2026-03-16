@@ -920,8 +920,12 @@
         let list = res.data;
 
         let laki = 0, perempuan = 0;
-        if (list && list.length > 0)
-          list.forEach(k => k.jenisKelamin === "Laki-laki" ? laki++ : perempuan++);
+        if (list && list.length > 0) {
+          list.forEach(k => {
+            let jk = (k.jenisKelamin || "").toLowerCase().replace(/[\s-]/g, '');
+            jk.includes("laki") ? laki++ : perempuan++;
+          });
+        }
 
         $("#statTotal").text(list ? list.length : 0);
         $("#statLaki").text(laki);
@@ -943,15 +947,21 @@
 
         $.each(list, function(i, ktp) {
           let tgl = new Date(ktp.tanggalLahir).toISOString().split("T")[0];
-          let gc  = ktp.jenisKelamin === "Laki-laki" ? "L" : "P";
-          let gi  = ktp.jenisKelamin === "Laki-laki" ? "♂" : "♀";
+
+          let jkFormat = (ktp.jenisKelamin || "").toLowerCase().replace(/[\s-]/g, '');
+          let isLaki = jkFormat.includes("laki");
+
+          let gc  = isLaki ? "L" : "P";
+          let gi  = isLaki ? "♂" : "♀";
+          let teksRapi = isLaki ? "Laki-laki" : "Perempuan";
+
           tbody.append(`<tr style="animation-delay:${i * 0.04}s">
             <td class="td-no">${String(i+1).padStart(2,"0")}</td>
             <td class="td-nik">${ktp.nomorKtp}</td>
             <td class="td-name">${ktp.namaLengkap}</td>
             <td class="td-addr" title="${ktp.alamat}">${ktp.alamat}</td>
             <td class="td-date">${tgl}</td>
-            <td><span class="gbadge ${gc}">${gi} ${ktp.jenisKelamin}</span></td>
+            <td><span class="gbadge ${gc}">${gi} ${teksRapi}</span></td>
             <td><div class="act-btns">
               <button class="abt abt-edit" onclick="editData(${ktp.id})"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Edit</button>
               <button class="abt abt-del"  onclick="deleteData(${ktp.id})"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg> Hapus</button>

@@ -8,6 +8,7 @@ import com.deploy.praktikum3.service.KtpService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 @Service
@@ -24,7 +25,7 @@ public class KtpServiceImpl implements KtpService {
 
         repository.findByNomorKtp(dto.getNomorKtp())
                 .ifPresent(k -> {
-                    throw new RuntimeException("Nomor KTP sudah ada");
+                    throw new IllegalArgumentException("Nomor KTP sudah ada");
                 });
 
         Ktp entity = KtpMapper.toEntity(dto);
@@ -46,7 +47,7 @@ public class KtpServiceImpl implements KtpService {
     public KtpDTO findById(Integer id) {
 
         Ktp ktp = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Data tidak ditemukan"));
+                .orElseThrow(() -> new NoSuchElementException("Data tidak ditemukan"));
 
         return KtpMapper.toDTO(ktp);
     }
@@ -55,7 +56,7 @@ public class KtpServiceImpl implements KtpService {
     public KtpDTO update(Integer id, KtpDTO dto) {
 
         Ktp ktp = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Data tidak ditemukan"));
+                .orElseThrow(() -> new NoSuchElementException("Data tidak ditemukan"));
 
         ktp.setNomorKtp(dto.getNomorKtp());
         ktp.setNamaLengkap(dto.getNamaLengkap());
@@ -71,7 +72,7 @@ public class KtpServiceImpl implements KtpService {
     @Override
     public void delete(Integer id) {
         if (!repository.existsById(id)) {
-            throw new RuntimeException("Data tidak ditemukan");
+            throw new NoSuchElementException("Data tidak ditemukan");
         }
         repository.deleteById(id);
     }
