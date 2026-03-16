@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Data KTP — Manajemen Penduduk</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;0,700;1,400&family=Nunito:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+          --teal-dark:  #0b4f54;
+          --teal:       #0d6b72;
+          --teal-mid:   #138a93;
+          --teal-soft:  #e6f4f5;
+          --teal-xsoft: #f0f9fa;
+          --accent:     #e07b3a;
+          --accent-soft:#fdf0e7;
+          --white:      #ffffff;
+          --bg:         #f4f7f8;
+          --border:     #ccdfe1;
+          --border-mid: #b0cfd2;
+          --text:       #1a2e30;
+          --text-mid:   #3d5a5c;
+          --text-sub:   #6b8a8c;
+          --danger:     #dc3545;
+          --success:    #1a8a5a;
+          --mono:       'JetBrains Mono', monospace;
+          --body:       'Nunito', sans-serif;
+          --display:    'Fraunces', serif;
+        }
+
+        *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+        html, body {
+          height: 100%;
+          background: var(--bg);
+          color: var(--text);
+          font-family: var(--body);
+          font-size: 14px;
+        }
+
+        /* subtle background texture */
+        body::before {
+          content: '';
+          position: fixed; inset: 0;
+          background-image:
+            radial-gradient(circle at 20% 20%, rgba(13,107,114,0.05) 0%, transparent 50%),
+            radial-gradient(circle at 80% 80%, rgba(13,107,114,0.04) 0%, transparent 50%);
+          pointer-events: none; z-index: 0;
+        }
+
+        /* ─── SHELL ────────────────────────────────── */
+        .shell {
+          position: relative; z-index: 1;
+          min-height: 100vh;
+          display: grid;
+          grid-template-rows: auto 1fr auto;
+        }
+
+        /* ─── TOPBAR ───────────────────────────────── */
+        .topbar {
+          background: var(--teal-dark);
+          display: flex;
+          align-items: center;
+          padding: 0 28px;
+          height: 64px;
+          gap: 16px;
+          box-shadow: 0 2px 12px rgba(11,79,84,0.25);
+          position: relative;
+          overflow: hidden;
+        }
+
+        /* decorative stripe */
+        .topbar::after {
+          content: '';
+          position: absolute;
+          bottom: 0; left: 0; right: 0;
+          height: 3px;
+          background: linear-gradient(90deg, var(--accent), #f5a86a, var(--accent));
+        }
+
+        /* subtle wave pattern */
+        .topbar::before {
+          content: '';
+          position: absolute;
+          right: -60px; top: -60px;
+          width: 200px; height: 200px;
+          border-radius: 50%;
+          border: 30px solid rgba(255,255,255,0.03);
+          pointer-events: none;
+        }
+
+        .logo-wrap {
+          display: flex; align-items: center; gap: 12px;
+        }
+
+        .logo-mark {
+          width: 40px; height: 40px;
+          background: var(--white);
+          border-radius: 10px;
+          display: flex; align-items: center; justify-content: center;
+          font-family: var(--mono);
+          font-size: 12px; font-weight: 600;
+          color: var(--teal-dark);
+          letter-spacing: -0.5px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+          flex-shrink: 0;
+        }
+
+        .logo-info h1 {
+          font-family: var(--display);
+          font-size: 17px; font-weight: 700;
+          color: var(--white);
+          line-height: 1.1;
+        }
+
+        .logo-info p {
+          font-size: 11px;
+          color: rgba(255,255,255,0.5);
+          font-weight: 500;
+          margin-top: 1px;
+          letter-spacing: 0.3px;
+        }
+
+        .topbar-divider {
+          width: 1px; height: 28px;
+          background: rgba(255,255,255,0.15);
+          margin: 0 4px;
+        }
+
+        .topbar-tag {
+          font-size: 11px;
+          color: rgba(255,255,255,0.45);
+          letter-spacing: 0.5px;
+        }
+
+        .topbar-stats {
+          margin-left: auto;
+          display: flex; align-items: center; gap: 6px;
+        }
+
+        .tstat {
+          display: flex; align-items: center; gap: 10px;
+          background: rgba(255,255,255,0.08);
+          border: 1px solid rgba(255,255,255,0.12);
+          border-radius: 8px;
+          padding: 7px 14px;
+        }
+
+        .tstat-icon {
+          display: flex; align-items: center; justify-content: center;
+          flex-shrink: 0;
+        }
+
+        .tstat-info { line-height: 1; }
+
+        .tstat-val {
+          font-family: var(--mono);
+          font-size: 15px; font-weight: 600;
+          color: var(--white);
+        }
+
+        .tstat-lbl {
+          font-size: 10px;
+          color: rgba(255,255,255,0.45);
+          margin-top: 2px;
+          font-weight: 600;
+          letter-spacing: 0.3px;
+        }
+
+        /* ─── CONTENT ──────────────────────────────── */
+        .content {
+          display: grid;
+          grid-template-columns: 380px 1fr;
+          height: calc(100vh - 64px - 44px);
+        }
+
+        /* ─── SIDEBAR ──────────────────────────────── */
+        .sidebar {
+          background: var(--white);
+          border-right: 1px solid var(--border);
+          display: flex;
+          flex-direction: column;
+          overflow-y: auto;
+        }
+
+        .sidebar-head {
+          padding: 28px 28px 0;
+        }
+
+        .section-tag {
+          display: inline-flex; align-items: center; gap: 6px;
+          background: var(--teal-soft);
+          color: var(--teal);
+          font-size: 10px; font-weight: 800;
+          letter-spacing: 1.5px; text-transform: uppercase;
+          padding: 4px 10px;
+          border-radius: 20px;
+          margin-bottom: 10px;
+        }
+
+        .section-tag .dot {
+          width: 5px; height: 5px;
+          border-radius: 50%;
+          background: var(--teal);
+        }
+
+        .sidebar-title {
+          font-family: var(--display);
+          font-size: 26px; font-weight: 700;
+          color: var(--text);
+          line-height: 1.15;
+          margin-bottom: 6px;
+        }
+
+        .sidebar-title em {
+          font-style: italic;
+          color: var(--teal);
+        }
+
+        .sidebar-desc {
+          font-size: 12.5px;
+          color: var(--text-sub);
+          line-height: 1.65;
+          margin-bottom: 20px;
+        }
+
+        /* mode strip */
+        .mode-strip {
+          margin: 0 28px 20px;
+          padding: 10px 14px;
+          border-radius: 10px;
+          display: flex; align-items: center; gap: 9px;
+          font-size: 12.5px; font-weight: 700;
+          background: var(--teal-xsoft);
+          border: 1.5px solid var(--border);
+          color: var(--teal);
+          transition: all 0.3s;
+        }
+
+        .mode-strip.edit-mode {
+          background: var(--accent-soft);
+          border-color: #f5c9a6;
+          color: var(--accent);
+        }
+
+        .mode-icon { display: flex; align-items: center; flex-shrink: 0; }
+
+        /* form */
+        .form-body { padding: 0 28px 28px; flex: 1; }
+
+        .fgroup { margin-bottom: 18px; }
+
+        .fgroup label {
+          display: flex; align-items: center; justify-content: space-between;
+          font-size: 12px; font-weight: 800;
+          color: var(--text-mid);
+          letter-spacing: 0.4px;
+          margin-bottom: 7px;
+        }
+
+        /* group label text + asterisk together, hint floats right */
+        .label-left { display: flex; align-items: center; gap: 3px; }
+        .req { color: var(--accent); font-size: 13px; line-height: 1; }
+        .hint { font-family: var(--mono); font-size: 10px; color: var(--text-sub); font-weight: 400; }
+
+        .fgroup input,
+        .fgroup select,
+        .fgroup textarea {
+          width: 100%;
+          padding: 11px 14px;
+          background: var(--bg);
+          border: 1.5px solid var(--border);
+          border-radius: 10px;
+          color: var(--text);
+          font-family: var(--body);
+          font-size: 14px;
+          outline: none;
+          transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+          -webkit-appearance: none; appearance: none;
+        }
+
+        #nomorKtp {
+          font-family: var(--mono);
+          letter-spacing: 2.5px;
+          font-size: 14px;
+        }
+
+        .fgroup input:focus,
+        .fgroup select:focus,
+        .fgroup textarea:focus {
+          border-color: var(--teal-mid);
+          background: var(--white);
+          box-shadow: 0 0 0 3px rgba(13,107,114,0.1);
+        }
+
+        .fgroup input.err,
+        .fgroup select.err,
+        .fgroup textarea.err {
+          border-color: var(--danger) !important;
+          box-shadow: 0 0 0 3px rgba(220,53,69,0.08) !important;
+          animation: shake 0.35s ease;
+        }
+
+        .fgroup input.ok,
+        .fgroup select.ok,
+        .fgroup textarea.ok {
+          border-color: var(--success) !important;
+        }
+
+        @keyframes shake {
+          0%,100% { transform: translateX(0); }
+          20%     { transform: translateX(-5px); }
+          60%     { transform: translateX(5px); }
+          80%     { transform: translateX(-3px); }
+        }
+
+        .fgroup textarea { resize: vertical; min-height: 76px; }
+        .fgroup select option { background: var(--white); }
+
+        /* NIK counter */
+        .nik-wrap { position: relative; }
+        .nik-counter {
+          position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+          font-family: var(--mono); font-size: 11px; color: var(--text-sub);
+          pointer-events: none; transition: color 0.2s;
+        }
+        .nik-counter.full { color: var(--success); font-weight: 600; }
+        .nik-counter.over { color: var(--danger); }
+
+        /* error messages */
+        .err-msg {
+          display: none; align-items: center; gap: 5px;
+          margin-top: 5px; font-size: 11.5px; font-weight: 700;
+          color: var(--danger);
+        }
+        .err-msg.visible { display: flex; }
+        .err-msg::before { content: '▲'; font-size: 8px; position: relative; top: -1px; }
+
+        .frow {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 14px;
+        }
+
+        .fdivider {
+          height: 1px; background: var(--border);
+          margin: 20px 0;
+        }
+
+        /* buttons */
+        .btn-row { display: flex; gap: 10px; }
+
+        .btn {
+          padding: 12px 22px;
+          border: none; border-radius: 10px;
+          font-family: var(--body);
+          font-size: 14px; font-weight: 800;
+          cursor: pointer;
+          display: flex; align-items: center; gap: 8px;
+          transition: all 0.18s;
+        }
+
+        .btn-save {
+          flex: 1; justify-content: center;
+          background: var(--teal-dark);
+          color: var(--white);
+          box-shadow: 0 4px 14px rgba(11,79,84,0.3);
+        }
+
+        .btn-save:hover {
+          background: var(--teal);
+          transform: translateY(-1px);
+          box-shadow: 0 6px 20px rgba(11,79,84,0.35);
+        }
+
+        .btn-save.editing {
+          background: var(--accent);
+          box-shadow: 0 4px 14px rgba(224,123,58,0.3);
+        }
+
+        .btn-save.editing:hover {
+          background: #c96b2a;
+          box-shadow: 0 6px 20px rgba(224,123,58,0.4);
+        }
+
+        .btn-cancel {
+          padding: 12px 16px;
+          background: transparent;
+          color: var(--text-sub);
+          border: 1.5px solid var(--border);
+          display: none;
+        }
+
+        .btn-cancel:hover { background: var(--bg); color: var(--text); border-color: var(--border-mid); }
+
+        /* ─── MAIN ─────────────────────────────────── */
+        .main {
+          display: flex; flex-direction: column;
+          overflow: hidden;
+          background: var(--bg);
+        }
+
+        .main-head {
+          padding: 24px 28px 0;
+          flex-shrink: 0;
+        }
+
+        .main-title-row {
+          display: flex; align-items: flex-end; justify-content: space-between;
+          margin-bottom: 16px;
+        }
+
+        .main-title {
+          font-family: var(--display);
+          font-size: 22px; font-weight: 700;
+          color: var(--text);
+        }
+
+        .record-pill {
+          font-family: var(--mono);
+          font-size: 11px; font-weight: 600;
+          color: var(--teal);
+          padding: 5px 12px;
+          background: var(--teal-soft);
+          border: 1px solid var(--border);
+          border-radius: 20px;
+        }
+
+        /* table */
+        .table-scroll {
+          flex: 1; overflow-y: auto;
+          padding: 0 28px 24px;
+          margin-top: 4px;
+        }
+
+        table { width: 100%; border-collapse: separate; border-spacing: 0 6px; }
+
+        thead th {
+          padding: 8px 14px;
+          font-size: 10.5px; font-weight: 800;
+          color: var(--text-sub);
+          letter-spacing: 1px; text-transform: uppercase;
+          text-align: left;
+          white-space: nowrap;
+          background: transparent;
+          border-bottom: 1.5px solid var(--border);
+        }
+
+        tbody tr {
+          background: var(--white);
+          border-radius: 10px;
+          box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+          transition: all 0.15s;
+          animation: rowIn 0.3s ease both;
+        }
+
+        @keyframes rowIn {
+          from { opacity:0; transform: translateY(6px); }
+          to   { opacity:1; transform: translateY(0); }
+        }
+
+        tbody tr:hover {
+          box-shadow: 0 4px 16px rgba(11,79,84,0.1);
+          transform: translateY(-1px);
+        }
+
+        tbody td {
+          padding: 13px 14px;
+          vertical-align: middle;
+          font-size: 13.5px;
+        }
+
+        tbody td:first-child {
+          padding-left: 18px;
+          border-radius: 10px 0 0 10px;
+          border-left: 3px solid transparent;
+        }
+
+        tbody tr:hover td:first-child { border-left-color: var(--teal-mid); }
+        tbody td:last-child { border-radius: 0 10px 10px 0; }
+
+        .td-no {
+          font-family: var(--mono);
+          font-size: 11px; color: var(--text-sub);
+          width: 36px;
+        }
+
+        .td-nik {
+          font-family: var(--mono);
+          font-size: 12.5px; letter-spacing: 1.5px;
+          color: var(--teal-dark); font-weight: 600;
+        }
+
+        .td-name { font-weight: 700; color: var(--text); }
+
+        .td-addr {
+          color: var(--text-sub);
+          max-width: 160px;
+          white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+
+        .td-date {
+          font-family: var(--mono); font-size: 12px;
+          color: var(--text-mid);
+        }
+
+        .gbadge {
+          display: inline-flex; align-items: center; gap: 5px;
+          padding: 4px 11px; border-radius: 20px;
+          font-size: 11.5px; font-weight: 700;
+        }
+
+        .gbadge.L {
+          background: #e0f0fc; color: #1565a8;
+          border: 1px solid #b8d8f5;
+        }
+
+        .gbadge.P {
+          background: #fce4f1; color: #9c1a6e;
+          border: 1px solid #f5b8dc;
+        }
+
+        .act-btns { display: flex; gap: 6px; }
+
+        .abt {
+          padding: 6px 13px;
+          border: none; border-radius: 7px;
+          font-family: var(--body); font-size: 12px; font-weight: 700;
+          cursor: pointer; transition: all 0.15s;
+          display: flex; align-items: center; gap: 5px;
+        }
+
+        .abt-edit {
+          background: #fff8e6; color: #b45309;
+          border: 1px solid #fcd88a;
+        }
+
+        .abt-edit:hover { background: #fdefc4; transform: translateY(-1px); }
+
+        .abt-del {
+          background: #fef2f2; color: #b91c1c;
+          border: 1px solid #fecaca;
+        }
+
+        .abt-del:hover { background: #fee2e2; transform: translateY(-1px); }
+
+        /* empty */
+        .empty-row td {
+          text-align: center; padding: 72px 20px;
+          background: transparent !important;
+          box-shadow: none !important;
+          border-left: none !important;
+        }
+
+        .empty-box {
+          display: inline-flex; flex-direction: column;
+          align-items: center; gap: 12px;
+        }
+
+        .empty-icon-wrap {
+          width: 72px; height: 72px;
+          background: var(--teal-soft);
+          border-radius: 50%;
+          display: flex; align-items: center; justify-content: center;
+          font-size: 30px;
+          border: 2px dashed var(--border-mid);
+        }
+
+        .empty-lbl {
+          font-size: 14px; font-weight: 700;
+          color: var(--text-sub);
+        }
+
+        .empty-sub {
+          font-size: 12px; color: var(--text-sub);
+          margin-top: -6px; opacity: 0.7;
+        }
+
+        /* ─── FOOTER ───────────────────────────────── */
+        .footer {
+          height: 44px;
+          background: var(--teal-dark);
+          display: flex; align-items: center;
+          padding: 0 28px; gap: 14px;
+          font-size: 11.5px; color: rgba(255,255,255,0.45);
+        }
+
+        .status-wrap {
+          display: flex; align-items: center; gap: 7px;
+          color: rgba(255,255,255,0.7); font-weight: 600;
+        }
+
+        .status-dot {
+          width: 7px; height: 7px; border-radius: 50%;
+          background: #4ade80;
+          box-shadow: 0 0 6px #4ade80;
+          animation: blink 2.5s infinite;
+        }
+
+        @keyframes blink {
+          0%,100% { opacity:1; } 50% { opacity:.4; }
+        }
+
+        .footer-right { margin-left: auto; font-weight: 500; }
+
+        /* scrollbar */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--border-mid); }
+
+        /* SweetAlert custom */
+        .swal2-popup {
+          font-family: 'Nunito', sans-serif !important;
+          border-radius: 20px !important;
+          padding: 32px !important;
+        }
+        .swal2-title { font-family: 'Fraunces', serif !important; font-weight: 700 !important; }
+        .swal2-confirm { font-family: 'Nunito', sans-serif !important; font-weight: 800 !important; border-radius: 10px !important; }
+        .swal2-cancel  { font-family: 'Nunito', sans-serif !important; font-weight: 700 !important; border-radius: 10px !important; }
+
+        /* responsive */
+        @media (max-width: 860px) {
+          .content { grid-template-columns: 1fr; height: auto; }
+          .sidebar { border-right: none; border-bottom: 1px solid var(--border); max-height: none; }
+          .main { height: 70vh; }
+          .tstat { display: none; }
+          .tstat:first-child { display: flex; }
+        }
+    </style>
+</head>
+<body>
+<div class="shell">
+
+    <!-- TOPBAR -->
+    <header class="topbar">
+        <div class="logo-wrap">
+            <div class="logo-mark">KTP</div>
+            <div class="logo-info">
+                <h1>Sistem Data Kependudukan</h1>
+                <p>Manajemen Kartu Tanda Penduduk</p>
+            </div>
+        </div>
+        <div class="topbar-divider"></div>
+        <span class="topbar-tag">dukcapil · sistem internal</span>
+
+        <div class="topbar-stats">
+            <div class="tstat">
+                <!-- ID card icon -->
+                <svg class="tstat-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="7" y1="15" x2="12" y2="15"/><line x1="7" y1="18" x2="10" y2="18"/></svg>
+                <div class="tstat-info">
+                    <div class="tstat-val" id="statTotal">0</div>
+                    <div class="tstat-lbl">Total KTP</div>
+                </div>
+            </div>
+            <div class="tstat">
+                <!-- male icon -->
+                <svg class="tstat-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="14" r="5"/><line x1="19" y1="5" x2="14.14" y2="9.86"/><polyline points="15 5 19 5 19 9"/></svg>
+                <div class="tstat-info">
+                    <div class="tstat-val" id="statLaki">0</div>
+                    <div class="tstat-lbl">Laki-laki</div>
+                </div>
+            </div>
+            <div class="tstat">
+                <!-- female icon -->
+                <svg class="tstat-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><line x1="12" y1="13" x2="12" y2="21"/><line x1="9" y1="18" x2="15" y2="18"/></svg>
+                <div class="tstat-info">
+                    <div class="tstat-val" id="statPerempuan">0</div>
+                    <div class="tstat-lbl">Perempuan</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- CONTENT -->
+    <div class="content">
+
+        <!-- SIDEBAR FORM -->
+        <aside class="sidebar">
+            <div class="sidebar-head">
+                <div class="section-tag"><div class="dot"></div> Input Data</div>
+                <div class="sidebar-title">Form <em>Pendaftaran</em></div>
+                <div class="sidebar-desc">Isi semua kolom dengan benar dan lengkap. NIK harus terdiri dari 16 digit angka sesuai dokumen resmi.</div>
+            </div>
+
+            <div class="mode-strip" id="modeStrip">
+        <span class="mode-icon" id="modeIcon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </span>
+                <span id="modeText">Tambah Data KTP Baru</span>
+            </div>
+
+            <div class="form-body">
+                <form id="ktpForm" novalidate>
+                    <input type="hidden" id="idKtp">
+
+                    <!-- NIK -->
+                    <div class="fgroup">
+                        <label for="nomorKtp">
+                            <span class="label-left">Nomor KTP (NIK) <span class="req">*</span></span>
+                            <span class="hint">16 digit angka</span>
+                        </label>
+                        <div class="nik-wrap">
+                            <input type="text" id="nomorKtp" placeholder="Contoh: 3276010410712345" maxlength="16" autocomplete="off">
+                            <span class="nik-counter" id="nikCounter">0/16</span>
+                        </div>
+                        <div class="err-msg" id="err-nomorKtp">NIK harus tepat 16 digit angka</div>
+                    </div>
+
+                    <!-- Nama -->
+                    <div class="fgroup">
+                        <label for="namaLengkap"><span class="label-left">Nama Lengkap <span class="req">*</span></span></label>
+                        <input type="text" id="namaLengkap" placeholder="Masukkan nama sesuai dokumen resmi">
+                        <div class="err-msg" id="err-namaLengkap">Nama lengkap tidak boleh kosong</div>
+                    </div>
+
+                    <!-- Alamat -->
+                    <div class="fgroup">
+                        <label for="alamat"><span class="label-left">Alamat Lengkap <span class="req">*</span></span></label>
+                        <textarea id="alamat" placeholder="Jalan, RT/RW, Kelurahan, Kecamatan, Kota/Kabupaten"></textarea>
+                        <div class="err-msg" id="err-alamat">Alamat tidak boleh kosong</div>
+                    </div>
+
+                    <!-- Tgl Lahir + Jenis Kelamin -->
+                    <div class="frow">
+                        <div class="fgroup">
+                            <label for="tanggalLahir"><span class="label-left">Tanggal Lahir <span class="req">*</span></span></label>
+                            <input type="date" id="tanggalLahir">
+                            <div class="err-msg" id="err-tanggalLahir">Wajib diisi</div>
+                        </div>
+                        <div class="fgroup">
+                            <label for="jenisKelamin"><span class="label-left">Jenis Kelamin <span class="req">*</span></span></label>
+                            <select id="jenisKelamin">
+                                <option value="">— Pilih —</option>
+                                <option value="Laki-laki">Laki-laki</option>
+                                <option value="Perempuan">Perempuan</option>
+                            </select>
+                            <div class="err-msg" id="err-jenisKelamin">Wajib dipilih</div>
+                        </div>
+                    </div>
+
+                    <div class="fdivider"></div>
+
+                    <div class="btn-row">
+                        <button type="submit" class="btn btn-save" id="btnSave">
+              <span id="btnIcon">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+              </span>
+                            <span id="btnLabel">Simpan Data</span>
+                        </button>
+                        <button type="button" id="btnCancel" class="btn btn-cancel" title="Batal edit">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </aside>
+
+        <!-- MAIN TABLE -->
+        <main class="main">
+            <div class="main-head">
+                <div class="section-tag"><div class="dot"></div> Data Terdaftar</div>
+                <div class="main-title-row">
+                    <div class="main-title">Daftar Penduduk Terdaftar</div>
+                    <div class="record-pill" id="recordCount">Memuat...</div>
+                </div>
+            </div>
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>No</th>
+                        <th>NIK</th>
+                        <th>Nama Lengkap</th>
+                        <th>Alamat</th>
+                        <th>Tgl. Lahir</th>
+                        <th>Kelamin</th>
+                        <th>Aksi</th>
+                    </tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+        </main>
+
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="status-wrap">
+            <div class="status-dot"></div>
+            <span>Terhubung ke Server</span>
+        </div>
+        <span>·</span>
+        <span>localhost:8081/ktp</span>
+        <div class="footer-right">Praktikum Pemrograman Web &nbsp;·&nbsp; Spring Boot + MySQL</div>
+    </footer>
+
+</div>
+
+<script>
+    const API_URL = "http://localhost:8081/ktp";
+
+    // ─── NIK counter — digits only ───────────────────────────────
+    $("#nomorKtp").on("input", function() {
+      let val = $(this).val().replace(/\D/g, "");
+      $(this).val(val);
+      let len = val.length;
+      let $c = $("#nikCounter");
+      $c.text(len + "/16").removeClass("full over");
+      if (len === 16) $c.addClass("full");
+      if (len > 0) clearErr("nomorKtp");
+    });
+
+    // ─── Validation ───────────────────────────────────────────────
+    function showErr(f) {
+      $("#" + f).addClass("err").removeClass("ok");
+      $("#err-" + f).addClass("visible");
+    }
+    function clearErr(f) {
+      $("#" + f).removeClass("err").addClass("ok");
+      $("#err-" + f).removeClass("visible");
+    }
+
+    function validateForm() {
+      let valid = true;
+      const checks = [
+        { id: "nomorKtp",    test: v => /^\d{16}$/.test(v.trim()) },
+        { id: "namaLengkap", test: v => v.trim().length >= 2 },
+        { id: "alamat",      test: v => v.trim().length >= 3 },
+        { id: "tanggalLahir",test: v => v !== "" },
+        { id: "jenisKelamin",test: v => v !== "" },
+      ];
+      checks.forEach(({ id, test }) => {
+        const val = $("#" + id).val();
+        if (!test(val)) { showErr(id); valid = false; }
+        else clearErr(id);
+      });
+      return valid;
+    }
+
+    ["namaLengkap","alamat","tanggalLahir","jenisKelamin"].forEach(f => {
+      $("#" + f).on("input change", function() {
+        if ($(this).val()) clearErr(f);
+      });
+    });
+
+    // ─── Init ────────────────────────────────────────────────────
+    $(document).ready(function() {
+      $("#tanggalLahir").attr("max", new Date().toISOString().split("T")[0]);
+      loadData();
+
+      $("#ktpForm").submit(function(e) {
+        e.preventDefault();
+        if (!validateForm()) {
+          // scroll to first error
+          let $firstErr = $(".fgroup input.err, .fgroup select.err, .fgroup textarea.err").first();
+          if ($firstErr.length) $firstErr.focus();
+          return;
+        }
+
+        let id = $("#idKtp").val();
+        let isEdit = id !== "";
+        let data = {
+          nomorKtp:     $("#nomorKtp").val().trim(),
+          namaLengkap:  $("#namaLengkap").val().trim(),
+          alamat:       $("#alamat").val().trim(),
+          tanggalLahir: $("#tanggalLahir").val(),
+          jenisKelamin: $("#jenisKelamin").val()
+        };
+
+        // loading state
+        $("#btnSave").prop("disabled", true).css("opacity","0.7");
+        $("#btnLabel").text(isEdit ? "Menyimpan..." : "Menambahkan...");
+
+        $.ajax({
+          url: isEdit ? `${API_URL}/${id}` : API_URL,
+          type: isEdit ? "PUT" : "POST",
+          contentType: "application/json",
+          data: JSON.stringify(data),
+          success: function(res) {
+            Swal.fire({
+              icon: "success",
+              title: isEdit ? "Data Berhasil Diperbarui!" : "Data Berhasil Ditambahkan!",
+              text: res.message,
+              confirmButtonColor: "#0b4f54",
+              confirmButtonText: "Oke",
+              timer: 3000,
+              timerProgressBar: true,
+              showClass: { popup: "swal2-show" },
+            });
+            resetForm();
+            loadData();
+          },
+          error: function(xhr) {
+            let msg = "Terjadi kesalahan saat menyimpan data.";
+            if (xhr.responseJSON && xhr.responseJSON.message) msg = xhr.responseJSON.message;
+            else if (xhr.status === 500) msg = "NIK sudah terdaftar. Gunakan nomor KTP yang berbeda.";
+            Swal.fire({ icon: "error", title: "Gagal Menyimpan", text: msg, confirmButtonColor: "#dc3545" });
+          },
+          complete: function() {
+            $("#btnSave").prop("disabled", false).css("opacity","1");
+            let isEdit = $("#idKtp").val() !== "";
+            $("#btnLabel").text(isEdit ? "Update Data" : "Simpan Data");
+          }
+        });
+      });
+
+      $("#btnCancel").click(function() { resetForm(); });
+    });
+
+    // ─── Load data ───────────────────────────────────────────────
+    function loadData() {
+      $.get(API_URL, function(res) {
+        let tbody = $("#tableBody");
+        tbody.empty();
+        let list = res.data;
+
+        let laki = 0, perempuan = 0;
+        if (list && list.length > 0)
+          list.forEach(k => k.jenisKelamin === "Laki-laki" ? laki++ : perempuan++);
+
+        $("#statTotal").text(list ? list.length : 0);
+        $("#statLaki").text(laki);
+        $("#statPerempuan").text(perempuan);
+        $("#recordCount").text((list ? list.length : 0) + " data ditemukan");
+
+        if (!list || list.length === 0) {
+          tbody.append(`<tr class="empty-row"><td colspan="7">
+            <div class="empty-box">
+              <div class="empty-icon-wrap">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--teal-mid)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="7" y1="15" x2="12" y2="15"/><line x1="7" y1="18" x2="10" y2="18"/></svg>
+              </div>
+              <div class="empty-lbl">Belum Ada Data KTP</div>
+              <div class="empty-sub">Tambahkan data menggunakan form di samping</div>
+            </div>
+          </td></tr>`);
+          return;
+        }
+
+        $.each(list, function(i, ktp) {
+          let tgl = new Date(ktp.tanggalLahir).toISOString().split("T")[0];
+          let gc  = ktp.jenisKelamin === "Laki-laki" ? "L" : "P";
+          let gi  = ktp.jenisKelamin === "Laki-laki" ? "♂" : "♀";
+          tbody.append(`<tr style="animation-delay:${i * 0.04}s">
+            <td class="td-no">${String(i+1).padStart(2,"0")}</td>
+            <td class="td-nik">${ktp.nomorKtp}</td>
+            <td class="td-name">${ktp.namaLengkap}</td>
+            <td class="td-addr" title="${ktp.alamat}">${ktp.alamat}</td>
+            <td class="td-date">${tgl}</td>
+            <td><span class="gbadge ${gc}">${gi} ${ktp.jenisKelamin}</span></td>
+            <td><div class="act-btns">
+              <button class="abt abt-edit" onclick="editData(${ktp.id})"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Edit</button>
+              <button class="abt abt-del"  onclick="deleteData(${ktp.id})"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg> Hapus</button>
+            </div></td>
+          </tr>`);
+        });
+      }).fail(function() {
+        Swal.fire({
+          icon: "error",
+          title: "Server Tidak Merespons",
+          text: "Tidak dapat terhubung ke server. Pastikan aplikasi Spring Boot sudah berjalan.",
+          confirmButtonColor: "#dc3545"
+        });
+      });
+    }
+
+    // ─── Edit ────────────────────────────────────────────────────
+    function editData(id) {
+      $.get(`${API_URL}/${id}`, function(res) {
+        let ktp = res.data;
+        $("#idKtp").val(ktp.id);
+        $("#nomorKtp").val(ktp.nomorKtp);
+        $("#namaLengkap").val(ktp.namaLengkap);
+        $("#alamat").val(ktp.alamat);
+        $("#tanggalLahir").val(new Date(ktp.tanggalLahir).toISOString().split("T")[0]);
+        $("#jenisKelamin").val(ktp.jenisKelamin);
+        $("#nikCounter").text(ktp.nomorKtp.length + "/16").addClass("full");
+        // update UI to edit mode
+        $("#modeStrip").addClass("edit-mode");
+        $("#modeIcon").html('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>');
+        $("#modeText").text("Sedang Mengedit Data — ID #" + ktp.id);
+        $("#btnSave").addClass("editing");
+        $("#btnIcon").html('<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>');
+        $("#btnLabel").text("Update Data");
+        $("#btnCancel").show();
+        $(".sidebar").animate({ scrollTop: 0 }, 300);
+      });
+    }
+
+    // ─── Delete ──────────────────────────────────────────────────
+    function deleteData(id) {
+      Swal.fire({
+        title: "Hapus Data KTP?",
+        text: "Data yang sudah dihapus tidak dapat dikembalikan.",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#dc3545",
+        cancelButtonColor: "#6b8a8c",
+        confirmButtonText: "Ya, Hapus",
+        cancelButtonText: "Batal",
+      }).then(result => {
+        if (!result.isConfirmed) return;
+        $.ajax({
+          url: `${API_URL}/${id}`,
+          type: "DELETE",
+          success: function(res) {
+            Swal.fire({
+              icon: "success",
+              title: "Data Berhasil Dihapus",
+              text: res.message,
+              confirmButtonColor: "#0b4f54",
+              timer: 2500,
+              timerProgressBar: true
+            });
+            loadData();
+          },
+          error: function() {
+            Swal.fire({ icon: "error", title: "Gagal Menghapus", text: "Terjadi kesalahan pada server.", confirmButtonColor: "#dc3545" });
+          }
+        });
+      });
+    }
+
+    // ─── Reset ───────────────────────────────────────────────────
+    function resetForm() {
+      $("#ktpForm")[0].reset();
+      $("#idKtp").val("");
+      $("#modeStrip").removeClass("edit-mode");
+      $("#modeIcon").html('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>');
+      $("#modeText").text("Tambah Data KTP Baru");
+      $("#btnSave").removeClass("editing");
+      $("#btnIcon").html('<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>');
+      $("#btnLabel").text("Simpan Data");
+      $("#btnCancel").hide();
+      $("#nikCounter").text("0/16").removeClass("full over");
+      ["nomorKtp","namaLengkap","alamat","tanggalLahir","jenisKelamin"].forEach(f => {
+        $("#" + f).removeClass("err ok");
+        $("#err-" + f).removeClass("visible");
+      });
+    }
+</script>
+</body>
+</html>
