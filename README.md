@@ -10,7 +10,7 @@ Kelas  : C
 **Schema:** `spring`  
 **Tabel:** `ktp`
 
-<img width="1306" height="698" alt="image" src="https://github.com/user-attachments/assets/721b4cfe-f7b8-4258-9a9f-f03aa682503c" />
+<img width="1303" height="707" alt="image" src="https://github.com/user-attachments/assets/8a0c5fe9-2cea-44ba-bbb4-cdac98b6c3ba" />
 
 ## Pengujian API di Postman
 ### ➕ POST `/ktp` — Tambah Data KTP
@@ -43,7 +43,7 @@ Kelas  : C
 ```
 <img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/aaff404a-d6f7-4762-92fe-d89e92bfbf63" />
 
-**Response Error — NIK duplikat (`500`):**
+**Response Error — NIK duplikat (`400`):**
 ```json
 {
   "success": false,
@@ -51,7 +51,7 @@ Kelas  : C
   "data": null
 }
 ```
-<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/0823fb2c-4c62-4f8a-aa91-ee5e229cece9" />
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/7a6ffc64-1945-4c77-b514-77295e609ecd" />
 
 ### 📋 GET `/ktp` — Ambil Semua Data
 
@@ -109,7 +109,7 @@ Kelas  : C
   "data": null
 }
 ```
-<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/07572cf8-cee3-4a18-9b05-b7b1741c865c" />
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/0831e541-6f4f-4535-85d8-4f17ac9e455a" />
 
 ### ✏️ PUT `/ktp/{id}` — Update Data KTP
 
